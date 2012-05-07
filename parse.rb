@@ -2,7 +2,7 @@ require 'rubygems'
 require 'nokogiri'
 require 'csv'
 
-module Debuts
+module Parser
   def parse file
     doc = Nokogiri::HTML IO.read(file)
     
