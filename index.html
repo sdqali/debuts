@@ -1,137 +1,139 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<title>Who makes better debuts?</title>
-<style>
+<html>
+  <head>
+    <title>Dot Plot</title>
+    <script type="text/javascript" src="../../d3.v2.js"></script>
+    <style type="text/css">
 
-#chart {
-  margin-left: -40px;
-  height: 506px;
-}
-
-text {
+body {
   font: 10px sans-serif;
 }
 
-.dot {
-  stroke: #000;
+path.dot {
+  fill: white;
+  stroke-width: 1.5px;
 }
 
-.axis path, .axis line {
+rect {
   fill: none;
-  stroke: #000;
+  stroke: black;
   shape-rendering: crispEdges;
 }
 
-.label {
-  fill: #777;
+.x line, .y line {
+  stroke: #ccc;
+  shape-rendering: crispEdges;
 }
 
-.year.label {
-  font: 500 196px "Helvetica Neue";
-  fill: #ddd;
-}
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
 
-.year.label.active {
-  fill: #aaa;
-}
+var data = d3.range(100).map(function(i) {
+  return {x: i / 99, y: Math.random()};
+});
 
-.overlay {
-  fill: none;
-  pointer-events: all;
-  cursor: ew-resize;
-}
+var width = 900,
+    height = 400,
+    margin = 20;
 
-</style>
+var x = d3.scale.linear()
+  .range([0, width])
+  .domain([0,900]);
 
-<h1>Who makes better debuts?</h1>
+var y = d3.scale.linear()
+    .range([height, 0])
+    .domain([0, 200]);
 
-<p id="chart"></p>
-
-<script src="d3.v2.min.js"></script>
-<script>
-
-// Various accessors that specify the four dimensions of data to visualize.
-function x(d) { return d.performance.Runs; }
-function y(d) { return d.performance.BatAv; }
+function xVal(d) { return d.performance.Runs; }
+function yVal(d) { return d.performance.BatAv; }
 function radius(d) { return d.performance.HS; }
 function color(d) { var map = {"Pakistan": 1, "India": 2}; return map[d.country]; }
 function key(d) { return d.name; }
 
-// Chart dimensions.
-var margin = {top: 19.5, right: 19.5, bottom: 19.5, left: 39.5},
-    width = 960 - margin.right,
-    height = 500 - margin.top - margin.bottom;
+var colorScale = d3.scale.linear().domain([1, 2]).range(["#637939", "#1f77b4"]);
+var radiusScale = d3.scale.sqrt().domain([0, 200]).range([0, 20]);
+var symbol = d3.scale.ordinal().range(d3.svg.symbolTypes);
 
-// Various scales. These domains make assumptions of data, naturally.
-var xScale = d3.scale.linear().domain([0, 900]).range([0, 900]),
-    yScale = d3.scale.linear().domain([0, 400]).range([400, 0]),
-    radiusScale = d3.scale.sqrt().domain([0, 300]).range([0, 20]),
-    colorScale = d3.scale.linear().domain([1, 2]).range(["green", "blue"]);
+var vis = d3.select("body")
+  .append("svg")
+    .attr("width", width + margin * 2)
+    .attr("height", height + margin * 2)
+  .append("g")
+    .call(d3.behavior.zoom().on("zoom", redraw))
+  .append("g")
+    .attr("transform", "translate(" + margin + "," + margin + ")");
 
-// The x & y axes.
-var xAxis = d3.svg.axis().orient("bottom").scale(xScale).ticks(12, d3.format(",d")),
-    yAxis = d3.svg.axis().scale(yScale).orient("left");
 
-// Create the SVG container and set the origin.
-var svg = d3.select("#chart").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom);
+function redraw() {
+  console.log("here", d3.event.translate, d3.event.scale);
+  vis.attr("transform",
+      "translate(" + d3.event.translate + ")"
+      + " scale(" + d3.event.scale + ")");
+}
+    
+var xrule = vis.selectAll("g.x")
+    .data(x.ticks(20))
+  .enter().append("g")
+    .attr("class", "x");
 
-// Add the x-axis.
-svg.append("g")
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + height + ")")
-    .call(xAxis);
+xrule.append("line")
+    .attr("x1", x)
+    .attr("x2", x)
+    .attr("y1", 0)
+    .attr("y2", height);
 
-// Add the y-axis.
-svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis);
+xrule.append("text")
+    .attr("x", x)
+    .attr("y", height + 3)
+    .attr("dy", ".79em")
+    .attr("text-anchor", "middle")
+    .text(x.tickFormat(10));
 
-// Add an x-axis label.
-svg.append("text")
-    .attr("class", "x label")
+var yrule = vis.selectAll("g.y")
+    .data(y.ticks(10))
+  .enter().append("g")
+    .attr("class", "y");
+
+yrule.append("line")
+    .attr("x1", 0)
+    .attr("x2", width)
+    .attr("y1", y)
+    .attr("y2", y);
+
+yrule.append("text")
+    .attr("x", -3)
+    .attr("y", y)
+    .attr("dy", ".35em")
     .attr("text-anchor", "end")
-    .attr("x", width)
-    .attr("y", height - 6)
-    .text("Runs Scored");
+    .text(y.tickFormat(10));
 
-// Add a y-axis label.
-svg.append("text")
-    .attr("class", "y label")
-    .attr("text-anchor", "end")
-    .attr("y", 6)
-    .attr("dy", ".75em")
-    .attr("transform", "rotate(-90)")
-    .text("Batting Average");
-
-// Load the data.
 d3.json("data/debuts.json", function(debuts) {
 
-  // Add a dot per nation. Initialize the data at 1800, and set the colors.
-  var dot = svg.append("g")
+  var dot = vis.append("g")
       .attr("class", "dots")
     .selectAll(".dot")
       .data(debuts)
     .enter().append("circle")
       .attr("class", "dot")
       .style("fill", function(d) { return colorScale(color(d)); })
+      .style("stroke", 0)
+      .style("stroke-width", 1.2)
+      .style("opacity", 0.7)
       .call(position)
       .sort(order);
 
-  // Add a title.
   dot.append("title")
       .text(function(d) { return d.name; });
 
 
-  // Positions the dots based on data.
   function position(dot) {
-    dot.attr("cx", function(d) { return xScale(x(d)); })
-        .attr("cy", function(d) { return yScale(y(d)); })
+    dot.attr("cx", function(d) { return x(xVal(d)); })
+        .attr("cy", function(d) { return y(yVal(d)); })
         .attr("r", function(d) { return radiusScale(radius(d)); });
   }
 
-  // Defines a sort order so that the smallest dots are drawn on top.
   function order(a, b) {
     return radius(b) - radius(a);
   }
