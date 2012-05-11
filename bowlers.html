@@ -2,6 +2,7 @@
     <head>
         <title>D3 Test</title>
         <script type="text/javascript" src="d3.v2.js"></script>
+        <script type="text/javascript" src="utils.js"></script>
         <style type="text/css">
 	  .axis path,
 	  .axis line {
@@ -23,6 +24,12 @@
 
 	  .legend text {
 	  }
+
+	  .rule line {
+	      stroke: #000;
+	      stroke-opacity: 0.2;
+	      shape-rendering: crispEdges;
+	  }
 	</style>
     </head>
     <body>
@@ -35,6 +42,7 @@ var colorMap = {
     "India": "#1f77b4",
     "Pakistan": "#637939"
 };
+
 var svg = d3.select("body")
     .append("svg")
     .attr("width", w)
@@ -56,39 +64,29 @@ function team(d) {
     return d.country;
 };
 
-function capitalize(w) {
-    return w.replace(w.charAt(0), w.charAt(0).toUpperCase());
-};
-
-function humanize(str) {
-    return str.split(" ").map(function(w){
-	if(w == "in") {
-	    return w;
-	} else {
-	    return capitalize(w);
-	}
-    }).join(" ");
-};
-
 function prettyData(d) {
-    return (d.name + ", \n"
-	    + humanize(d.series) + ", \n"
-	    + "Bowling Average: " + bowlAv(d) + ", \n"
-	    + "Wickets: " + wickets(d) + ", \n"
-	    + "Best Bowling: " + d.performance.BB);
+    return [d.name,
+	    utils.humanize(d.series),
+	    "Bowling Average: " + bowlAv(d),
+	    "Wickets: " + wickets(d),
+	    "Best Bowling: " + d.performance.BB]
 };
 
-function writeLegend(d) {
-    clearLegend(d);
+function writeLegend(data) {
+    clearLegend(data);
     d3.select(".legend")
-	.append("text")
-	.text(prettyData(d));
+	.selectAll("text")
+	.data(prettyData(data))
+	.enter()
+	.append("div")
+	.text(function(stat) {
+	    return stat;
+	});
 };
 
 function clearLegend(d) {
     d3.select(".legend")
-	.select("text")
-	.text("")
+	.selectAll("div")
 	.remove();
 };
 
@@ -177,9 +175,36 @@ d3.json("../data/debuts.json", function(dataset) {
     	.text("Wickets")
 	.attr("text-anchor", "middle");
     yLabel.attr("transform", "translate(" + padding/2 + "," +  (h - padding)/2 +") rotate(270)");
+
+    var xRule = svg.append("g")
+	.selectAll(".rule")
+	.data(yScale.ticks(10))
+	.enter()
+	.append("g")
+	.attr("class", "rule")
+	.attr("transform", function(d) {
+	    return "translate(" + 2 * padding + ", " + yScale(d) + ")";
+	});
+
+    xRule.append("line")
+	.attr("x2", w - 3 * padding);
+
+    var yRule = svg.append("g")
+	.selectAll(".rule")
+	.data(xScale.ticks(20))
+	.enter()
+	.append("g")
+	.attr("class", "rule")
+	.attr("transform", function(d) {
+	    return "translate(" + xScale(d) + "," + padding + ")";
+	});
+
+    yRule.append("line")
+	.attr("y2", h - 3 * padding);
 });
       </script>
       <div class="legend">
+	<p />
       </div>
     </body>
 </html>
