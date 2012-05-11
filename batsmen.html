@@ -70,7 +70,8 @@ function sanitize(data) {
     return data.filter(function(d) {
 	return !isNaN(totalRuns(d)) &&
 	    !isNaN(batAverage(d)) &&
-	    !isNaN(highScore(d));
+	    !isNaN(highScore(d)) &&
+	    totalRuns(d) < 600;
     });
 };
 
