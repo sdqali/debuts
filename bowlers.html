@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>D3 Test</title>
+        <title>Bowling Debuts</title>
         <script type="text/javascript" src="d3.v2.js"></script>
         <script type="text/javascript" src="utils.js"></script>
         <link type="text/css" rel="stylesheet" href="stylesheet.css"></link>
@@ -50,10 +50,11 @@ function prettyData(d) {
 function writeLegend(data) {
     clearLegend(data);
     d3.select(".legend")
-	.selectAll("text")
+	.selectAll("ul")
+	.attr("class", "foo")
 	.data(prettyData(data))
 	.enter()
-	.append("div")
+	.append("li")
 	.text(function(stat) {
 	    return stat;
 	});
@@ -61,7 +62,7 @@ function writeLegend(data) {
 
 function clearLegend(d) {
     d3.select(".legend")
-	.selectAll("div")
+	.selectAll("li")
 	.remove();
 };
 
@@ -178,8 +179,8 @@ d3.json("../data/debuts.json", function(dataset) {
 	.attr("y2", h - 3 * padding);
 });
       </script>
+
       <div class="legend">
-	<p />
       </div>
     </body>
 </html>
