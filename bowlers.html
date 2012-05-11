@@ -33,6 +33,8 @@
 	</style>
     </head>
     <body>
+      <div class="vis">
+      </div>
       <script type="text/javascript">
 var w = 1000;
 var h = 500;
@@ -43,7 +45,7 @@ var colorMap = {
     "Pakistan": "#637939"
 };
 
-var svg = d3.select("body")
+var svg = d3.select(".vis")
     .append("svg")
     .attr("width", w)
     .attr("height", h);
@@ -92,7 +94,7 @@ function clearLegend(d) {
 
 function sanitize(data) {
     return data.filter(function(d) {
-	return d.performance.W > 0;
+	return d.performance.W > 0 && d.performance.BowlAv < 110;
     });
 };
 
