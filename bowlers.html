@@ -5,14 +5,23 @@
         <style type="text/css">
 	  .axis path,
 	  .axis line {
-	  fill: none;
-	  stroke: black;
-	  shape-rendering: crispEdges;
+	      fill: none;
+	      stroke: black;
+	      shape-rendering: crispEdges;
+	  }
+	  
+	  .axis text {
+	      font-family: sans-serif;
+	      font-size: 11px;
 	  }
 
-	  .axis text {
-	    font-family: sans-serif;
-	    font-size: 11px;
+	  .legend {
+	      width: 1000;
+	      height: 20;
+	      text-align: center;
+	  }
+
+	  .legend text {
 	  }
 	</style>
     </head>
@@ -47,13 +56,41 @@ function team(d) {
     return d.country;
 };
 
+function capitalize(w) {
+    return w.replace(w.charAt(0), w.charAt(0).toUpperCase());
+};
+
+function humanize(str) {
+    return str.split(" ").map(function(w){
+	if(w == "in") {
+	    return w;
+	} else {
+	    return capitalize(w);
+	}
+    }).join(" ");
+};
+
 function prettyData(d) {
-    return (d.name + "\n"
-	    + d.series + "\n"
-	    + "Bowling Average: " + bowlAv(d) + "\n"
-	    + "Wickets: " + wickets(d) + "\n"
-	    + "Best Bowling: " + bestBowling(d));
-}
+    return (d.name + ", \n"
+	    + humanize(d.series) + ", \n"
+	    + "Bowling Average: " + bowlAv(d) + ", \n"
+	    + "Wickets: " + wickets(d) + ", \n"
+	    + "Best Bowling: " + d.performance.BB);
+};
+
+function writeLegend(d) {
+    clearLegend(d);
+    d3.select(".legend")
+	.append("text")
+	.text(prettyData(d));
+};
+
+function clearLegend(d) {
+    d3.select(".legend")
+	.select("text")
+	.text("")
+	.remove();
+};
 
 d3.json("../data/debuts.json", function(dataset) {
     var xScale = d3.scale.linear()
@@ -80,10 +117,28 @@ d3.json("../data/debuts.json", function(dataset) {
 	    return colorMap[team(d)];
 	})
 	.attr("stroke", "white")
-	.attr("opacity", 0.6);
+	.attr("opacity", 0.6)
+	.on("mouseover", function(d){
+	    d3.select(this)
+		.attr("r", function(d) {
+		    return radiusScale(bestBowling(d)) + 5;
+		})
+		.attr("opacity", "1");
+	    writeLegend(d);
+	})
+	.on("mouseout", function(d){
+	    d3.select(this)
+		.attr("r", function(d) {return radiusScale(bestBowling(d));})
+		.attr("opacity", 0.6);
+	    clearLegend();
+	})
+	.sort(function(a, b) {
+	    return bestBowling(b) -  bestBowling(a);
+	});
+
     circles.append("title")
 	.text(function(d) {return prettyData(d);});
-
+    
     var xAxis = d3.svg.axis()
 	.scale(xScale)
 	.ticks(20)
@@ -115,7 +170,8 @@ d3.json("../data/debuts.json", function(dataset) {
 	.attr("text-anchor", "middle");
     yLabel.attr("transform", "translate(" + padding/2 + "," +  (h - padding)/2 +") rotate(270)");
 });
-
       </script>
+      <div class="legend">
+      </div>
     </body>
 </html>
