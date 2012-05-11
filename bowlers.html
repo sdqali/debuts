@@ -92,7 +92,15 @@ function clearLegend(d) {
 	.remove();
 };
 
+function sanitize(data) {
+    return data.filter(function(d) {
+	return d.performance.W > 0;
+    });
+};
+
 d3.json("../data/debuts.json", function(dataset) {
+    dataset = sanitize(dataset);
+
     var xScale = d3.scale.linear()
 	.domain([0, d3.max(dataset, function(d) {return bowlAv(d);})])
 	.range([2 * padding, w - padding]);
