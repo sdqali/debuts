@@ -1,7 +1,7 @@
 <html>
     <head>
         <title>D3 Test</title>
-        <script type="text/javascript" src="../d3.v2.js"></script>
+        <script type="text/javascript" src="d3.v2.js"></script>
         <style type="text/css">
 	  .axis path,
 	  .axis line {
@@ -100,13 +100,11 @@ d3.json("../data/debuts.json", function(dataset) {
     	.attr("class", "axis")
 	.attr("transform", "translate(" +  2 * padding + ", 0)")
     	.call(yAxis);
-
     
     var yLabel = svg.append("g");
     yLabel.append("text")
     	.text("Batting Average")
 	.attr("text-anchor", "middle");
-
     yLabel.attr("transform", "translate(" + padding/2 + "," +  (h - padding)/2 +") rotate(270)");
 });
 

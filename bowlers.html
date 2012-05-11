@@ -1,142 +1,121 @@
-<!DOCTYPE html>
 <html>
-  <head>
-    <title>Dot Plot</title>
-    <script type="text/javascript" src="../../d3.v2.js"></script>
-    <style type="text/css">
+    <head>
+        <title>D3 Test</title>
+        <script type="text/javascript" src="d3.v2.js"></script>
+        <style type="text/css">
+	  .axis path,
+	  .axis line {
+	  fill: none;
+	  stroke: black;
+	  shape-rendering: crispEdges;
+	  }
 
-body {
-  font: 10px sans-serif;
+	  .axis text {
+	    font-family: sans-serif;
+	    font-size: 11px;
+	  }
+	</style>
+    </head>
+    <body>
+      <script type="text/javascript">
+var w = 1000;
+var h = 500;
+var barPadding = 1;
+var padding = 30;
+var colorMap = {
+    "India": "#1f77b4",
+    "Pakistan": "#637939"
+};
+var svg = d3.select("body")
+    .append("svg")
+    .attr("width", w)
+    .attr("height", h);
+
+function bowlAv(d) {
+    return Number(d.performance.BowlAv);
+};
+
+function wickets(d) {
+    return Number(d.performance.W);
+};
+
+function bestBowling(d) {
+    return Number(d.performance.BB.split("/")[0]);
+};
+
+function team(d) {
+    return d.country;
+};
+
+function prettyData(d) {
+    return (d.name + "\n"
+	    + d.series + "\n"
+	    + "Bowling Average: " + bowlAv(d) + "\n"
+	    + "Wickets: " + wickets(d) + "\n"
+	    + "Best Bowling: " + bestBowling(d));
 }
 
-path.dot {
-  fill: white;
-  stroke-width: 1.5px;
-}
+d3.json("../data/debuts.json", function(dataset) {
+    var xScale = d3.scale.linear()
+	.domain([0, d3.max(dataset, function(d) {return bowlAv(d);})])
+	.range([2 * padding, w - padding]);
 
-rect {
-  fill: none;
-  stroke: black;
-  shape-rendering: crispEdges;
-}
+    var yScale = d3.scale.linear()
+	.domain([0, d3.max(dataset, function(d) {return wickets(d);})])
+	.range([h - 2 * padding, padding]);
 
-.x line, .y line {
-  stroke: #ccc;
-  shape-rendering: crispEdges;
-}
+    var radiusScale = d3.scale.linear()
+	.domain([0, d3.max(dataset, function(d) {return bestBowling(d);})])
+	.range([0, 20]);
 
-    </style>
-  </head>
-  <body>
-    <script type="text/javascript">
+    var circles = svg.append("g")
+	.selectAll("circle")
+	.data(dataset)
+	.enter()
+	.append("circle")
+	.attr("cx", function(d, i) {return xScale(bowlAv(d));})
+	.attr("cy", function(d) {return yScale(wickets(d));})
+	.attr("r", function(d) {return radiusScale((bestBowling(d)));})
+	.attr("fill", function(d) {
+	    return colorMap[team(d)];
+	})
+	.attr("stroke", "white")
+	.attr("opacity", 0.6);
+    circles.append("title")
+	.text(function(d) {return prettyData(d);});
 
-var data = d3.range(100).map(function(i) {
-  return {x: i / 99, y: Math.random()};
-});
+    var xAxis = d3.svg.axis()
+	.scale(xScale)
+	.ticks(20)
+	.orient("bottom");
 
-var width = 900,
-    height = 400,
-    margin = 20;
+    svg.append("g")
+	.attr("class", "axis")
+	.attr("transform", "translate(0," + (h - 2 * padding) + ")")
+	.call(xAxis);
 
-var x = d3.scale.linear()
-  .range([0, width])
-  .domain([200, 0]);
+    svg.append("text")
+    	.text("Bowling Average")
+	.attr("x", (w - 2 * padding)/2)
+	.attr("y", h - padding);
 
-var y = d3.scale.linear()
-    .range([height, 0])
-    .domain([0, 30]);
+    var yAxis = d3.svg.axis()
+	.scale(yScale)
+	.ticks(10)
+	.orient("left");
 
-function xVal(d) { return d.performance.BowlAv; }
-function yVal(d) { return d.performance.W; }
-function radius(d) { return d.performance.BB.split("/")[0]; }
-function color(d) { var map = {"Pakistan": 1, "India": 2}; return map[d.country]; }
-function key(d) { return d.name; }
-
-var colorScale = d3.scale.linear().domain([1, 2]).range(["#637939", "#1f77b4"]);
-var radiusScale = d3.scale.sqrt().domain([0, 20]).range([0, 20]);
-var symbol = d3.scale.ordinal().range(d3.svg.symbolTypes);
-
-var vis = d3.select("body")
-  .append("svg")
-    .attr("width", width + margin * 2)
-    .attr("height", height + margin * 2)
-  .append("g")
-    .call(d3.behavior.zoom().on("zoom", redraw))
-  .append("g")
-    .attr("transform", "translate(" + margin + "," + margin + ")");
-
-
-function redraw() {
-  console.log("here", d3.event.translate, d3.event.scale);
-  vis.attr("transform",
-      "translate(" + d3.event.translate + ")"
-      + " scale(" + d3.event.scale + ")");
-}
+    svg.append("g")
+    	.attr("class", "axis")
+	.attr("transform", "translate(" +  2 * padding + ", 0)")
+    	.call(yAxis);
     
-var xrule = vis.selectAll("g.x")
-    .data(x.ticks(20))
-  .enter().append("g")
-    .attr("class", "x");
-
-xrule.append("line")
-    .attr("x1", x)
-    .attr("x2", x)
-    .attr("y1", 0)
-    .attr("y2", height);
-
-xrule.append("text")
-    .attr("x", x)
-    .attr("y", height + 3)
-    .attr("dy", ".79em")
-    .attr("text-anchor", "middle")
-    .text(x.tickFormat(10));
-
-var yrule = vis.selectAll("g.y")
-    .data(y.ticks(10))
-  .enter().append("g")
-    .attr("class", "y");
-
-yrule.append("line")
-    .attr("x1", 0)
-    .attr("x2", width)
-    .attr("y1", y)
-    .attr("y2", y);
-
-yrule.append("text")
-    .attr("x", -3)
-    .attr("y", y)
-    .attr("dy", ".35em")
-    .attr("text-anchor", "end")
-    .text(y.tickFormat(10));
-
-d3.json("data/debuts.json", function(debuts) {
-
-  var dot = vis.append("g")
-      .attr("class", "dots")
-    .selectAll(".dot")
-      .data(debuts)
-    .enter().append("circle")
-      .attr("class", "dot")
-      .style("fill", function(d) { return colorScale(color(d)); })
-      .style("stroke", 0)
-      .style("stroke-width", 1.2)
-      .style("opacity", 0.7)
-      .call(position)
-      .sort(order);
-
-  dot.append("title")
-      .text(function(d) { return d.name; });
-
-
-  function position(dot) {
-    dot.attr("cx", function(d) { return x(xVal(d)); })
-        .attr("cy", function(d) { return y(yVal(d)); })
-        .attr("r", function(d) { return radiusScale(radius(d)); });
-  }
-
-  function order(a, b) {
-    return radius(b) - radius(a);
-  }
+    var yLabel = svg.append("g");
+    yLabel.append("text")
+    	.text("Wickets")
+	.attr("text-anchor", "middle");
+    yLabel.attr("transform", "translate(" + padding/2 + "," +  (h - padding)/2 +") rotate(270)");
 });
 
-</script>
+      </script>
+    </body>
+</html>
